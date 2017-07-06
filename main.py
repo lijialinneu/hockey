@@ -25,27 +25,32 @@ while cap.isOpened():
     if circles is not None:
         x, y, radius = circles[0][0]
         center = (x, y)
-
-        # update position
         deltaX = int(x) - lastX
         deltaY = int(y) - lastY
         lastX = int(x)
         lastY = int(y)
-
         if np.abs(deltaX) > 5 and np.abs(deltaY) > 5:
             send_data()
             cv2.circle(frame, center, radius, (0, 255, 0), 2)
             cv2.line(frame, (lastX, lastY), (lastX + deltaX, lastY + deltaY),(0, 255, 0), 2)
     
     else:
-        contour, hierarchy = cv2.findContours(dilated, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-        if contour:
-            (x, y, w, h) = cv2.boundingRect(contour[0])
+        contours, hierarchy = cv2.findContours(dilated, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        if contours:
+            '''
+            area = cv2.contourArea(contours[0])
 
+            # TODO add area threshold
+            perimeter = cv2.arcLength(contours[0], True)
+            roundness = (perimeter * perimeter) / (6.28 * area)
+            '''
+            (x, y, w, h) = cv2.boundingRect(contours[0])
+            
             deltaX = int(x) - lastX
             deltaY = int(y) - lastY
             lastX = int(x)
             lastY = int(y)
+
             cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
     
     cv2.imshow('video', frame)
