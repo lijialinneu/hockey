@@ -102,7 +102,7 @@ class Solution:
 
 
     def release_window(self):
-        cap.release()
+        self.cap.release()
         cv2.destroyAllWindows()
 
 
