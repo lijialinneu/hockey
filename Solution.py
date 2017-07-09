@@ -1,8 +1,6 @@
 import numpy as np
 import cv
-
 from TableObjects import *
-from SerialSingleton import *
 from time import clock
 
 class Solution:
@@ -22,8 +20,8 @@ class Solution:
             result_p = self.detect(self.puck, hue_image, frame)
             result_r = self.detect(self.robot, hue_image, frame)
             # TODO write serial
-            message = self.create_message()
-            self.serial.send_message(message)
+            # message = self.create_message()
+            # self.serial.write(message)
             if self.test_flag:
                 if result_p:
                     x, y, w, h = result_p
@@ -66,15 +64,18 @@ class Solution:
             Robot Pos_Y:     2 bytes (0-480)
         """
         time = clock() * 1000 - self.start_time * 1000 # change to millisecond
-        time_h, time_l = self.high_and_low(time)
+        time_h, time_l = self.high_and_low(long(time))
         puck_x_h, puck_x_l = self.high_and_low(self.puck.lastX)
         puck_y_h, puck_y_l = self.high_and_low(self.puck.lastY)
-        
-        robot_x_h, robot_x_l = self.high_and_low(self.robot.lastX)
-        robot_y_h, robot_y_l = self.high_and_low(self.robot.lastY)
-        
-        message = '\x6d\x6d'
-        return "asdf hahaha lalala hehehe"
+        area_h, area_l = self.high_and_low(int(self.puck.area))
+        robot_x_h, robot_x_l = self.high_and_low(self.puck.lastX)
+        robot_y_h, robot_y_l = self.high_and_low(self.puck.lastY)
+
+        message = '\x6d\x6d' + chr(time_h) + chr(time_l) + chr(puck_x_h) + chr(puck_x_l) \
+                             + chr(puck_y_h) + chr(puck_y_l) + chr(area_h) + chr(area_l) \
+                             + chr(robot_x_h) + chr(robot_x_l) + chr(robot_y_h) + chr(robot_y_l)
+        # print('message = ', message)
+        return message
 
     def high_and_low(self, x):
         return (x >> 8) & 255, x & 255

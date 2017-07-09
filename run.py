@@ -1,6 +1,6 @@
 from Solution import *
 from ReadVideoSingleton import *
-
+import serial
 """
 Hockey main program
 Solution: contour and threshold
@@ -15,7 +15,7 @@ if __name__ == "__main__":
     # Step1. init video and serial
     cap = ReadVideoSingleton(0).get_capture()
     start_time = clock()
-    serial = SerialSingleton()
+    serial = serial.Serial('/dev/ttyACM0', 115200, timeout = 1)
 
     # Step2. init puck and robot
     puck_position = [0, 0]
