@@ -5,18 +5,18 @@ class SerialSingleton:
 
     __instance = None
 
-    def __init__(self, time, puck, robot):
-        self.serial.Serial('/dev/ttyACM0', 115200, timeout = 1)
-        self.start_time = time
-        self.puck = puck
-        self.robot = robot
+    def __init__(self):
+        self.serial = serial.Serial('/dev/ttyACM0', 115200, timeout = 1)
 
-    def __new__(cls,):
+    def __new__(cls, *args, **kwargs):
         if not cls.__instance:
-            cls.__instance = super(SerialSingleton, cls).__new__(cls)
+            cls.__instance = super(SerialSingleton, cls).__new__(cls, *args, **kwargs)
         return cls.__instance
+
+    def get_serial(self):
+        return self.serial
     
-    def write_serial(self, time):
+    def send_message(self, message):
         """
         Serial packet:
             Sync start: 2 bytes: mm
@@ -32,5 +32,5 @@ class SerialSingleton:
         #     x = raw_input("Enter x and y value")
         #     print(x)
         #     ser.write(x)
-        pass
+        print(message)
 

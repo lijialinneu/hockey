@@ -1,6 +1,5 @@
 from Solution import *
 from ReadVideoSingleton import *
-from TableObjects import *
 
 """
 Hockey main program
@@ -13,10 +12,12 @@ if __name__ == "__main__":
     '''
     test Solution on 20170707
     '''
+    # Step1. init video and serial
     cap = ReadVideoSingleton(0).get_capture()
+    start_time = clock()
+    serial = SerialSingleton()
 
-
-    # arguments for puck green
+    # Step2. init puck and robot
     puck_position = [0, 0]
     puck_th_hsv_low = np.array([50, 120, 46])
     puck_th_hsv_high = np.array([60, 255, 255])
@@ -25,8 +26,6 @@ if __name__ == "__main__":
     puck_delta = 10
     puck = TableObjects(puck_position, puck_th_hsv_low, puck_th_hsv_high,
                         puck_th_area, puck_th_roundness, puck_delta)
-
-    # argument for robot red
     robot_position = [0, 0]
     robot_th_hsv_low = np.array([0, 120, 100])
     robot_th_hsv_high = np.array([5, 255, 255])
@@ -36,7 +35,8 @@ if __name__ == "__main__":
     robot = TableObjects(robot_position, robot_th_hsv_low, robot_th_hsv_high,
                          robot_th_area, robot_th_roundness, robot_delta)
 
-    solution = Solution(cap, puck, robot)
+    # Step3. start solution
+    solution = Solution(cap, puck, robot, serial, start_time, True)
     solution.solution_core()
 
     print('finish')
