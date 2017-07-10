@@ -7,8 +7,8 @@ class TableObjects:
         self.lastX, self.lastY = position
         self.deltaX = 0
         self.deltaY = 0
-        self.speed = 0
-        self.theta = 0
+        # self.speed = 0
+        # self.theta = 0
         self.area = 0
         self.perimeter = 0
         self.roundness = 0
@@ -16,7 +16,7 @@ class TableObjects:
         self.th_hsv_high = th_hsv_high
         self.th_area = th_area
         self.th_roundness = th_roundness
-        self.th_delta = th_delta
+        # self.th_delta = th_delta
 
     def cal_area(self, contour):
         self.area = cv2.contourArea(contour)

@@ -5,28 +5,23 @@ from time import clock
 
 class Solution:
 
-    def __init__(self, cap, puck, robot, serial, time, move, flag=True):        
+    def __init__(self, cap, puck, robot, serial, time, move, origin, flag=True):        
         self.cap = cap
         self.puck = puck
         self.robot = robot
         self.serial = serial
         self.start_time = time
         self.move_th = move
+        self.origin = origin
         self.test_flag = flag
 
     def solution_core(self):
-
-        
-        
         while self.cap.isOpened():            
-            ret, frame = self.cap.read()            
-
-            cv2.line(frame, (0,0), (400, 300), (255,0,0),2)
-
+            ret, frame = self.cap.read()
+            # cv2.circle(frame, (160, 120), 1, (0,255,0), 2)
             hue_image = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
             pos_p = self.detect(self.puck, hue_image, frame)
             pos_r = self.detect(self.robot, hue_image, frame)
-            
             
             if self.if_move(self.puck, pos_p) or self.if_move(self.robot, pos_r):                        
                 # send data
@@ -51,7 +46,7 @@ class Solution:
 
         if my_object is self.robot:
             circles = cv2.HoughCircles(dilated, cv.CV_HOUGH_GRADIENT, 1, 100,
-                                       param1=15, param2=7, minRadius=10, maxRadius=30)
+                                       param1=15, param2=7, minRadius=10, maxRadius=20)
             if circles is not None:
                 x, y, r = circles[0][0]
                 center = (x, y)                
@@ -64,8 +59,6 @@ class Solution:
                 my_object.update_position(x, y)
                 return x, y, w, h
         return None
-
-
 
     def meet_condition(self, my_object, contour):
         area = my_object.cal_area(contour)
@@ -93,18 +86,31 @@ class Solution:
             Robot Pos_X:     2 bytes (0-640)
             Robot Pos_Y:     2 bytes (0-480)
         """
-        time = clock() * 1000 - self.start_time * 1000 # change to millisecond
-        time_h, time_l = self.high_and_low(long(time))
-        puck_x_h, puck_x_l = self.high_and_low(self.puck.lastX)
-        puck_y_h, puck_y_l = self.high_and_low(self.puck.lastY)
-        area_h, area_l = self.high_and_low(int(self.puck.area))
-        robot_x_h, robot_x_l = self.high_and_low(self.puck.lastX)
-        robot_y_h, robot_y_l = self.high_and_low(self.puck.lastY)
+        message = '\x6d\x6d' 
 
-        message = '\x6d\x6d' + chr(time_h) + chr(time_l) + chr(puck_x_h) + chr(puck_x_l) \
-                             + chr(puck_y_h) + chr(puck_y_l) + chr(area_h) + chr(area_l) \
-                             + chr(robot_x_h) + chr(robot_x_l) + chr(robot_y_h) + chr(robot_y_l)
-        # print('message = ', message)
+        # change to millisecond
+        time = clock() * 1000 - self.start_time * 1000 
+        time_h, time_l = self.high_and_low(long(time))
+
+        # change coordinate x and y
+
+        p_x = 2 * (self.puck.lastX - self.origin[0])
+        p_y = 2 * (self.puck.lastY - self.origin[1])
+        r_x = 2 * (self.robot.lastX - self.origin[0])
+        r_y = 2 * (self.robot.lastY - self.origin[1])
+
+        if p_x in range(0, 640) or p_y in range(0, 480) :
+            print(r_x, '  ', r_y)
+            puck_x_h, puck_x_l = self.high_and_low(p_x)
+            puck_y_h, puck_y_l = self.high_and_low(p_y)
+            area_h, area_l = self.high_and_low(int(self.puck.area))
+            robot_x_h, robot_x_l = self.high_and_low(r_x)
+            robot_y_h, robot_y_l = self.high_and_low(r_y)
+
+            message = message + chr(time_h) + chr(time_l) + chr(puck_x_h) + chr(puck_x_l) \
+                              + chr(puck_y_h) + chr(puck_y_l) + chr(area_h) + chr(area_l) \
+                              + chr(robot_x_h) + chr(robot_x_l) + chr(robot_y_h) + chr(robot_y_l)
+        print('message = ', message)
         return message
 
     def high_and_low(self, x):

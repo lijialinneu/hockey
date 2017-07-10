@@ -36,8 +36,9 @@ if __name__ == "__main__":
                          robot_th_area, robot_th_roundness, robot_delta)
 
     # Step3. start solution
-    move_th = 10
-    solution = Solution(cap, puck, robot, serial, start_time, move_th, True)
+    move_th = 5
+    origin = (0, 0) #(14, 37)
+    solution = Solution(cap, puck, robot, serial, start_time, move_th, origin, True)
     solution.solution_core()
 
     print('finish')
