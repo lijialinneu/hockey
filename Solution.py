@@ -5,30 +5,41 @@ from time import clock
 
 class Solution:
 
-    def __init__(self, cap, puck, robot, serial, time, flag=True):        
+    def __init__(self, cap, puck, robot, serial, time, move, flag=True):        
         self.cap = cap
         self.puck = puck
         self.robot = robot
         self.serial = serial
         self.start_time = time
+        self.move_th = move
         self.test_flag = flag
 
     def solution_core(self):
-        while self.cap.isOpened():
-            ret, frame = self.cap.read()
+
+        
+        
+        while self.cap.isOpened():            
+            ret, frame = self.cap.read()            
+
+            cv2.line(frame, (0,0), (400, 300), (255,0,0),2)
+
             hue_image = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-            result_p = self.detect(self.puck, hue_image, frame)
-            result_r = self.detect(self.robot, hue_image, frame)
-            # TODO write serial
-            # message = self.create_message()
-            # self.serial.write(message)
+            pos_p = self.detect(self.puck, hue_image, frame)
+            pos_r = self.detect(self.robot, hue_image, frame)
+            
+            
+            if self.if_move(self.puck, pos_p) or self.if_move(self.robot, pos_r):                        
+                # send data
+                message = self.create_message()
+                self.serial.write(message)
+            
             if self.test_flag:
-                if result_p:
-                    x, y, w, h = result_p
+                if pos_p:
+                    x, y, w, h = pos_p
                     cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
-                if result_r:
-                    x, y, w, h = result_r
-                    cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 0, 255), 2)
+                if pos_r:
+                    x, y, r = pos_r
+                    cv2.circle(frame, (x, y), r, (0, 0, 255), 2)
                 cv2.imshow('frame', frame)
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
@@ -37,20 +48,39 @@ class Solution:
     def detect(self, my_object, hue_image, frame):
         th_img = cv2.inRange(hue_image, my_object.th_hsv_low, my_object.th_hsv_high)
         dilated = cv2.dilate(th_img, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3)), iterations=2)
-        contours, hierarchy = cv2.findContours(dilated, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-        if contours and self.meet_condition(my_object, contours[0]):
-            (x, y, w, h) = cv2.boundingRect(contours[0])
-            my_object.update_position(x, y)
-            return x, y, w, h
+
+        if my_object is self.robot:
+            circles = cv2.HoughCircles(dilated, cv.CV_HOUGH_GRADIENT, 1, 100,
+                                       param1=15, param2=7, minRadius=10, maxRadius=30)
+            if circles is not None:
+                x, y, r = circles[0][0]
+                center = (x, y)                
+                my_object.update_position(x, y)
+                return x, y, r
+        else:
+            contours, hierarchy = cv2.findContours(dilated, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+            if contours and self.meet_condition(my_object, contours[0]):
+                (x, y, w, h) = cv2.boundingRect(contours[0])
+                my_object.update_position(x, y)
+                return x, y, w, h
         return None
+
+
 
     def meet_condition(self, my_object, contour):
         area = my_object.cal_area(contour)
+        # print('area = ', area)
         if area in range(my_object.th_area[0], my_object.th_area[1]):
             my_object.cal_perimeter(contour)
             my_object.cal_roundness()
             return my_object.meet_roundness()
         return False    
+
+    def if_move(self, my_object, move):
+        if move is None:
+            return False
+        if my_object.deltaX > self.move_th or my_object.deltaY > self.move_th:
+            return True
 
     def create_message(self):
         """

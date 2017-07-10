@@ -1,5 +1,5 @@
 import cv2
-
+import cv
 
 class ReadVideoSingleton:
 
@@ -7,8 +7,10 @@ class ReadVideoSingleton:
 
     def __init__(self, index=0):
         self.cap = cv2.VideoCapture(index)
-        self.cap.set(3, 360)
+        self.cap.set(3, 400)
         self.cap.set(4, 240)
+        # self.cap.set(5, 1)
+
 
     def __new__(cls, index):
         if not cls.__instance:
