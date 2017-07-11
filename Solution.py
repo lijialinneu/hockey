@@ -1,6 +1,7 @@
 import numpy as np
 import cv
 from TableObjects import *
+import time
 from time import clock
 
 
@@ -8,38 +9,42 @@ class Solution:
 
 
     def __init__(self, cap, puck, robot, serial,
-                 time, move, origin, flag=True):        
+                 time, move, flag=True):        
         self.cap = cap
         self.puck = puck
         self.robot = robot
         self.serial = serial
         self.start_time = time
         self.move_th = move
-        self.origin = origin
         self.test_flag = flag
 
 
     def solution_core(self):
         while self.cap.isOpened():            
             ret, frame = self.cap.read()
-            # cv2.circle(frame, (160, 120), 1, (0,255,0), 2)
+            
             hue_image = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
             pos_p = self.detect_puck(hue_image, frame)
             pos_r = self.detect_robot(hue_image, frame)
             
-            if self.if_move(self.puck, pos_p) or \
-               self.if_move(self.robot, pos_r):                        
+            if self.if_move(self.puck, pos_p) :                       
                 # send data
                 message = self.create_message()
-                self.serial.write(message)
+                if message:
+                    self.serial.write(message)
+                    self.serial.flushInput()
             
             if self.test_flag:
                 if pos_p:
+                    '''
                     x, y, w, h = pos_p
                     cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+                    '''
+                    x, y, r = pos_p
+                    cv2.circle(frame, (x, y), 1, (0, 255, 0), 1)
                 if pos_r:
                     x, y, r = pos_r
-                    cv2.circle(frame, (x, y), r, (0, 0, 255), 2)
+                    cv2.circle(frame, (x, y), 1, (0, 0, 255), 1)
                 cv2.imshow('frame', frame)
                 
             if cv2.waitKey(1) & 0xFF == ord('q'):
@@ -50,19 +55,32 @@ class Solution:
 
     def detect_puck(self, hue_image, frame):
         th_img = cv2.inRange(hue_image, self.puck.th_hsv_low, self.puck.th_hsv_high)
+        # dilated = cv2.dilate(th_img, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3)), iterations=2)
+        # cv2.imshow('dilated', dilated)
+
+        '''
         contours, hierarchy = cv2.findContours(
-                th_img, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+                dilated, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
         if contours and self.meet_condition(self.puck, contours[0]):
             (x, y, w, h) = cv2.boundingRect(contours[0])
             self.puck.update_position(x, y)
             return x, y, w, h
+        '''
+        circles = cv2.HoughCircles(th_img, cv.CV_HOUGH_GRADIENT, 1, 100,
+                                       param1=15, param2=7, minRadius=5, maxRadius=15)
+        if circles is not None:
+            x, y, r = circles[0][0]
+            center = (x, y)
+            self.puck.area = 3.14 * r * r
+            self.puck.update_position(x, y)
+            return x, y, r
         return None
 
 
     def detect_robot(self, hue_image, frame):
         th_img = cv2.inRange(hue_image, self.robot.th_hsv_low, self.robot.th_hsv_high)
         circles = cv2.HoughCircles(th_img, cv.CV_HOUGH_GRADIENT, 1, 100,
-                                       param1=15, param2=7, minRadius=10, maxRadius=20)
+                                       param1=15, param2=7, minRadius=10, maxRadius=18)
         if circles is not None:
             x, y, r = circles[0][0]
             center = (x, y)                
@@ -106,20 +124,27 @@ class Solution:
         time_h, time_l = self.high_and_low(long(time))
 
         # change coordinate x and y
-        p_x = 2 * (self.puck.lastX - self.origin[0])
-        p_y = 2 * (self.puck.lastY - self.origin[1])
-        r_x = 2 * (self.robot.lastX - self.origin[0])
-        r_y = 2 * (self.robot.lastY - self.origin[1])
+        p_x = 2 * self.puck.lastX
+        p_y = 2 * self.puck.lastY
+        r_x = 2 * self.robot.lastX
+        r_y = 2 * self.robot.lastY
 
         if p_x in range(0, 640) and p_y in range(0, 480) :
 
-            print(p_x, ' ',p_y, '     ', r_x, ' ', r_y)
+
+            # print(p_x, ' ', p_y, ' ', self.puck.area)
 
             puck_x_h, puck_x_l = self.high_and_low(p_x)
             puck_y_h, puck_y_l = self.high_and_low(p_y)
             area_h, area_l = self.high_and_low(int(self.puck.area))
             robot_x_h, robot_x_l = self.high_and_low(r_x)
             robot_y_h, robot_y_l = self.high_and_low(r_y)
+
+
+
+            #print('mm', time_h, time_l, puck_x_h, puck_x_l,
+            #      puck_y_h, puck_y_l, area_h, area_l,
+            #      robot_x_h, robot_x_l, robot_y_h, robot_y_l)
             
             
             message = 'mm' + chr(time_h) + chr(time_l) \
@@ -128,16 +153,8 @@ class Solution:
                            + chr(area_h) + chr(area_l) \
                            + chr(robot_x_h) + chr(robot_x_l) \
                            + chr(robot_y_h) + chr(robot_y_l)
-            '''
-
-            message = 'mm' + \
-                      self.my_chr(int(time)) + \
-                      self.my_chr(int(p_x)) + self.my_chr(int(p_y)) + \
-                      self.my_chr(int(self.puck.area)) + \
-                      self.my_chr(int(r_x)) + self.my_chr(int(r_y))
-            '''
             
-        print('message = ', message)
+        
         return message
 
 

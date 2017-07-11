@@ -19,13 +19,21 @@ if __name__ == "__main__":
 
     # Step2. init puck and robot
     puck_position = [0, 0]
+    '''
     puck_th_hsv_low = np.array([50, 120, 46])
     puck_th_hsv_high = np.array([60, 255, 255])
-    puck_th_area = [150, 200]
+    '''
+    puck_th_hsv_low = np.array([0, 20, 120])
+    puck_th_hsv_high = np.array([31, 126, 255])
+    
+    # puck_th_area = [150, 200]
+    puck_th_area = [100, 200]
     puck_th_roundness = 8
     puck_delta = 10
     puck = TableObjects(puck_position, puck_th_hsv_low, puck_th_hsv_high,
                         puck_th_area, puck_th_roundness, puck_delta)
+
+    
     robot_position = [0, 0]
     robot_th_hsv_low = np.array([110, 120, 46])
     robot_th_hsv_high = np.array([124, 255, 255])
@@ -37,8 +45,7 @@ if __name__ == "__main__":
 
     # Step3. start solution
     move_th = 0
-    origin = (0, 0) #(14, 37)
-    solution = Solution(cap, puck, robot, serial, start_time, move_th, origin, True)
+    solution = Solution(cap, puck, robot, serial, start_time, move_th, True)
     solution.solution_core()
 
     print('finish')

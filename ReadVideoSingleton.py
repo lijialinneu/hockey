@@ -12,7 +12,7 @@ class ReadVideoSingleton:
         self.cap = cv2.VideoCapture(index)
         self.cap.set(3, 320)
         self.cap.set(4, 240)
-        self.cap.set(5, 1)
+        self.cap.set(5, 60)
 
 
     def __new__(cls, index):
