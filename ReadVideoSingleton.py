@@ -1,9 +1,12 @@
 import cv2
 import cv
 
+
 class ReadVideoSingleton:
 
+
     __instance = None
+
 
     def __init__(self, index=0):
         self.cap = cv2.VideoCapture(index)
@@ -16,6 +19,7 @@ class ReadVideoSingleton:
         if not cls.__instance:
             cls.__instance = super(ReadVideoSingleton, cls).__new__(cls)
         return cls.__instance
+
 
     def get_capture(self):
         return self.cap
