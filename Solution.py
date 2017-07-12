@@ -1,3 +1,34 @@
+# !/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+
+"""
+The core solution rogram
+Author: lijialin 1040591521@qq.com
+Date: July 2017
+
+Variables:
+    self.cap:          cv2.VideoCapture object
+    self.puck:         puck 
+    self.robot:        robot
+    self.serial:       serial(arduino)
+    self.start_time:   the start clock of run.py 
+    self.move_th:      threshold of motion
+    self.test_flag:    if True then show the trace window 
+
+Functions:
+    solution_core():   the core program of the solution
+    detect_puck():     detect puck
+    detect_robot():    detect robot
+    meet_condition():  return whether object satisfacts threshold (not used)
+    if_move():         return whether object is moving
+    create_message():  create messages sent to arduino
+    high_and_low():    return high eight bit and low eight bit
+    release_windows(): release the trace windows
+
+"""
+
+
 import numpy as np
 import cv
 from TableObjects import *
@@ -21,19 +52,18 @@ class Solution:
 
     def solution_core(self):
         while self.cap.isOpened():            
-            ret, frame = self.cap.read()
-            
+            ret, frame = self.cap.read()            
             hue_image = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
             pos_p = self.detect_puck(hue_image, frame)
             pos_r = self.detect_robot(hue_image, frame)
             
             if self.if_move(self.puck, pos_p) :                       
-                # send data
                 message = self.create_message()
                 if message:
-                    self.serial.write(message)
-                    self.serial.flushInput()
-            
+                    self.serial.write(message) # send data
+                    self.serial.flushInput() # flush input
+
+            # show trace windows
             if self.test_flag:
                 if pos_p:
                     '''
@@ -46,10 +76,8 @@ class Solution:
                     x, y, r = pos_r
                     cv2.circle(frame, (x, y), 1, (0, 0, 255), 1)
                 cv2.imshow('frame', frame)
-                
             if cv2.waitKey(1) & 0xFF == ord('q'):
-                break
-            
+                break  
         self.release_window()
 
 
@@ -66,6 +94,7 @@ class Solution:
             self.puck.update_position(x, y)
             return x, y, w, h
         '''
+        # hough circle method
         circles = cv2.HoughCircles(th_img, cv.CV_HOUGH_GRADIENT, 1, 100,
                                        param1=15, param2=7, minRadius=5, maxRadius=15)
         if circles is not None:
@@ -92,7 +121,6 @@ class Solution:
     def meet_condition(self, my_object, contour):
         area = my_object.cal_area(contour)
         # print('area = ', area)
-        
         if area in range(my_object.th_area[0], my_object.th_area[1]):
             my_object.cal_perimeter(contour)
             my_object.cal_roundness()
@@ -119,52 +147,36 @@ class Solution:
         """
         message = ''
 
-        # change to millisecond
+        # millisecond
         time = clock() * 1000 - self.start_time * 1000 
         time_h, time_l = self.high_and_low(long(time))
 
-        # change coordinate x and y
+        # coordinate x and y
         p_x = 2 * self.puck.lastX
         p_y = 2 * self.puck.lastY
         r_x = 2 * self.robot.lastX
         r_y = 2 * self.robot.lastY
 
         if p_x in range(0, 640) and p_y in range(0, 480) :
-
-
             # print(p_x, ' ', p_y, ' ', self.puck.area)
-
             puck_x_h, puck_x_l = self.high_and_low(p_x)
             puck_y_h, puck_y_l = self.high_and_low(p_y)
             area_h, area_l = self.high_and_low(int(self.puck.area))
             robot_x_h, robot_x_l = self.high_and_low(r_x)
             robot_y_h, robot_y_l = self.high_and_low(r_y)
-
-
-
+            
             #print('mm', time_h, time_l, puck_x_h, puck_x_l,
             #      puck_y_h, puck_y_l, area_h, area_l,
             #      robot_x_h, robot_x_l, robot_y_h, robot_y_l)
-            
-            
+                        
             message = 'mm' + chr(time_h) + chr(time_l) \
                            + chr(puck_x_h) + chr(puck_x_l) \
                            + chr(puck_y_h) + chr(puck_y_l) \
                            + chr(area_h) + chr(area_l) \
                            + chr(robot_x_h) + chr(robot_x_l) \
                            + chr(robot_y_h) + chr(robot_y_l)
-            
-        
         return message
 
-
-    '''
-    def my_chr(self, x):
-        if x not in range(0, 256):
-            return chr(255)
-        else:
-            return chr(x)
-    '''
 
     def high_and_low(self, x):
         return (x >> 8) & 255, x & 255

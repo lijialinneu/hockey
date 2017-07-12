@@ -1,3 +1,37 @@
+# !/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+
+"""
+TableObjects class
+Author: lijialin 1040591521@qq.com
+Date: July 2017
+
+Variables:
+    self.lastX:        object's last x
+    self.lastY:        object's last y 
+    self.deltaX:       object's delta x
+    self.deltaY:       object's delta y
+    self.area:         object's area
+    self.perimeter:    object's perimeter
+    self.roundness:    object's roundness
+    self.th_hsv_low:   object's hsv low threshold
+    self.th_hsv_high:  object's hsv low threshold
+    self.th_area:      threshold of object's area
+    self.th_roundness: threshold of object's roundness
+
+Functions:
+    cal_area():        calculate the area of a contour
+    cal_area_circle(): calculate the area of a circle
+    cal_perimeter():   calculate the perimeter of a contour
+    cal_roundness():   calculate roundness of a contour
+    meet_area():       return whether area satisfacts area threshold
+    meet_roundness():  return whether roundness satisfacts threshold
+    update_position(): update the position of table objects
+
+"""
+
+
 import cv2
 import sys
 
@@ -9,8 +43,6 @@ class TableObjects:
         self.lastX, self.lastY = position
         self.deltaX = 0
         self.deltaY = 0
-        # self.speed = 0
-        # self.theta = 0
         self.area = 0
         self.perimeter = 0
         self.roundness = 0
@@ -18,7 +50,6 @@ class TableObjects:
         self.th_hsv_high = th_hsv_high
         self.th_area = th_area
         self.th_roundness = th_roundness
-        # self.th_delta = th_delta
 
 
     def cal_area(self, contour):
