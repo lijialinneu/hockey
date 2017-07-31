@@ -24,6 +24,7 @@ The core program in the Solution.py
 import serial
 from Solution import *
 from ReadVideoSingleton import *
+from multiprocessing import Process, Queue
 
 
 if __name__ == "__main__":
@@ -36,19 +37,14 @@ if __name__ == "__main__":
     cap = ReadVideoSingleton(0).get_capture()
     start_time = clock() # start to clock
     serial = serial.Serial('/dev/ttyACM0', 115200, timeout = 1)
+    # serial = None
 
     # Step2. init puck and robot
     # We can change arguments here
     # puck's arguments
     puck_position = [0, 0]
-    '''
-    puck_th_hsv_low = np.array([50, 120, 46])
-    puck_th_hsv_high = np.array([60, 255, 255])
-    '''
-    puck_th_hsv_low = np.array([0, 20, 120])
-    puck_th_hsv_high = np.array([31, 126, 255])
-    
-    # puck_th_area = [150, 200]
+    puck_th_hsv_low = np.array([1, 112, 144])
+    puck_th_hsv_high = np.array([28, 255, 255])
     puck_th_area = [100, 200]
     puck_th_roundness = 8
     puck_delta = 10
@@ -61,8 +57,8 @@ if __name__ == "__main__":
 
     # robot's arguments
     robot_position = [0, 0]
-    robot_th_hsv_low = np.array([110, 120, 46])
-    robot_th_hsv_high = np.array([124, 255, 255])
+    robot_th_hsv_low = np.array([90, 80, 0])
+    robot_th_hsv_high = np.array([130, 255, 255])
     robot_th_area = [200, 600]
     robot_th_roundness = 20
     robot_delta = 10
@@ -73,13 +69,25 @@ if __name__ == "__main__":
                          robot_th_roundness,
                          robot_delta)
 
-    # Step3. start solution
-    # move_th is the threshold of motion distance
+    # Step3. create solution
     # True : display trace window
-    move_th = 0
-    solution = Solution(cap, puck, robot,
-                        serial, start_time, move_th, True)
-    solution.solution_core()
+    solution = Solution(cap, puck, robot, serial, start_time, True)
 
+
+    # Step4. start process
+    # prepare
+    prepare_flag = True
+    if prepare_flag:
+        solution.prepare()
+    else :
+         # create queue and process
+        queue = Queue()
+        image_process = Process(target=solution.solution_core, args=(queue,))
+        message_process = Process(target=solution.send_message, args=(queue,))
+        image_process.start()
+        message_process.start()
+        image_process.join()
+        message_process.terminate()
+        
     # finish
     print('finish')

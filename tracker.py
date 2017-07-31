@@ -52,12 +52,12 @@ def v_high(value):
     
 
 cv2.namedWindow('image')
-cv2.createTrackbar('H low','image', 0,255, h_low)
-cv2.createTrackbar('H high','image',0,255, h_high)
-cv2.createTrackbar('S low','image', 0,255, s_low)
-cv2.createTrackbar('S high','image',0,255, s_high)
-cv2.createTrackbar('V low','image', 0,255, v_low)
-cv2.createTrackbar('V high','image',0,255, v_high)
+cv2.createTrackbar('H low', 'image', 0, 255, h_low)
+cv2.createTrackbar('H high', 'image',0, 255, h_high)
+cv2.createTrackbar('S low', 'image', 0, 255, s_low)
+cv2.createTrackbar('S high', 'image',0, 255, s_high)
+cv2.createTrackbar('V low', 'image', 0, 255, v_low)
+cv2.createTrackbar('V high', 'image',0, 255, v_high)
 
 
 while cap.isOpened():
