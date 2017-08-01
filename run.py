@@ -36,11 +36,13 @@ if __name__ == "__main__":
     # get_capture() return the cv2.VideoCapture object
     cap = ReadVideoSingleton(0).get_capture()
     start_time = clock() # start to clock
+
     serial = serial.Serial('/dev/ttyACM0', 115200, timeout = 1)
+    # serial = serial.Serial('/dev/ttyUSB0', 115200, timeout = 1)
     # serial = None
 
+
     # Step2. init puck and robot
-    # We can change arguments here
     # puck's arguments
     puck_position = [0, 0]
     puck_th_hsv_low = np.array([1, 112, 144])
@@ -69,25 +71,20 @@ if __name__ == "__main__":
                          robot_th_roundness,
                          robot_delta)
 
+
     # Step3. create solution
     # True : display trace window
     solution = Solution(cap, puck, robot, serial, start_time, True)
 
 
     # Step4. start process
-    # prepare
-    prepare_flag = True
-    if prepare_flag:
-        solution.prepare()
-    else :
-         # create queue and process
-        queue = Queue()
-        image_process = Process(target=solution.solution_core, args=(queue,))
-        message_process = Process(target=solution.send_message, args=(queue,))
-        image_process.start()
-        message_process.start()
-        image_process.join()
-        message_process.terminate()
+    queue = Queue()
+    image_process = Process(target=solution.solution_core, args=(queue,))
+    message_process = Process(target=solution.send_message, args=(queue,))
+    image_process.start()
+    message_process.start()
+    image_process.join()
+    message_process.terminate()
         
     # finish
     print('finish')

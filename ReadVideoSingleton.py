@@ -16,24 +16,29 @@ Functions:
 
 import cv2
 import cv
-
+import threading
 
 class ReadVideoSingleton:
 
 
     __instance = None
+    lock = threading.Lock()
 
 
     def __init__(self, index=0):
         self.cap = cv2.VideoCapture(index)
         self.cap.set(3, 320) # set width 320px
         self.cap.set(4, 240) # set height 240px
-        self.cap.set(5, 60)  # set fps 60
+        self.cap.set(5, 120)  # set fps 60
 
 
     def __new__(cls, index):
-        if not cls.__instance:
-            cls.__instance = super(ReadVideoSingleton, cls).__new__(cls)
+        try:
+            lock.acquire()
+            if not cls.__instance:
+                cls.__instance = super(ReadVideoSingleton, cls).__new__(cls)
+        finally:
+            lock.release()
         return cls.__instance
 
 
