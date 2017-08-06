@@ -45,8 +45,19 @@ if __name__ == "__main__":
     # Step2. init puck and robot
     # puck's arguments
     puck_position = [0, 0]
-    puck_th_hsv_low = np.array([1, 112, 144])
-    puck_th_hsv_high = np.array([28, 255, 255])
+
+    # ping-pong
+    # puck_th_hsv_low = np.array([1, 112, 144])
+    # puck_th_hsv_high = np.array([28, 255, 255])
+
+    # green-puck
+    # puck_th_hsv_low = np.array([30, 110, 39])
+    # puck_th_hsv_high = np.array([74, 199, 143])
+
+    # red-puck
+    puck_th_hsv_low = np.array([0, 196, 62])
+    puck_th_hsv_high = np.array([10, 255, 188])
+
     puck_th_area = [100, 200]
     puck_th_roundness = 8
     puck_delta = 10
@@ -59,8 +70,16 @@ if __name__ == "__main__":
 
     # robot's arguments
     robot_position = [0, 0]
-    robot_th_hsv_low = np.array([90, 80, 0])
-    robot_th_hsv_high = np.array([130, 255, 255])
+
+    # blue-robot
+    # robot_th_hsv_low = np.array([100, 176, 0])
+    # robot_th_hsv_high = np.array([139, 255, 111])
+
+    # yellow-robot
+    robot_th_hsv_low = np.array([20, 186, 126])
+    robot_th_hsv_high = np.array([255, 255, 255])
+
+
     robot_th_area = [200, 600]
     robot_th_roundness = 20
     robot_delta = 10
@@ -70,7 +89,6 @@ if __name__ == "__main__":
                          robot_th_area,
                          robot_th_roundness,
                          robot_delta)
-
 
     # Step3. create solution
     # True : display trace window

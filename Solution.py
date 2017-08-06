@@ -22,7 +22,6 @@ Functions:
     create_message():  create messages sent to arduino
     high_and_low():    return high eight bit and low eight bit
     release_windows(): release the trace windows
-
 """
 
 
@@ -66,7 +65,12 @@ class Solution:
                 queue.put(self.create_message())
                     
             if self.test_flag:
+                # cv2.circle(frame, (17, 37), 2, (0, 0, 255), 2)
+                # cv2.circle(frame, (310, 40), 2, (0, 0, 255), 2)
+                # cv2.circle(frame, (10, 207), 2, (0, 0, 255), 2)
+                # cv2.circle(frame, (313, 217), 2, (0, 0, 255), 2)        
                 cv2.circle(frame, (160, 120), 2, (0, 0, 255), 2)
+                
                 cv2.imshow('frame', frame) # show trace windows
             
             if cv2.waitKey(1) & 0xFF == ord('q'):
@@ -76,14 +80,21 @@ class Solution:
 
     def detect_puck(self, hue_image, frame):
         th_img = cv2.inRange(hue_image, self.puck.th_hsv_low, self.puck.th_hsv_high)
+        # cv2.imshow('puck_th', th_img)
+        # ping-pong
         circles = cv2.HoughCircles(th_img, cv.CV_HOUGH_GRADIENT, 1, 100,
                                        param1=15, param2=7, minRadius=6, maxRadius=8)
+
+        # green-puck
+        '''
+        circles = cv2.HoughCircles(th_img, cv.CV_HOUGH_GRADIENT, 1, 100,
+                                       param1=15, param2=7, minRadius=5, maxRadius=15)
+        '''
         if circles is not None:
             x, y, r = circles[0][0]
             center = (x, y)
             self.puck.area = 3.14 * r * r
             self.puck.update_position(x, y)
-
             if self.test_flag:                
                 cv2.circle(frame, (x, y), 1, (0, 255, 0), 2)
             return x, y, r
@@ -92,15 +103,23 @@ class Solution:
 
     def detect_robot(self, hue_image, frame):
         th_img = cv2.inRange(hue_image, self.robot.th_hsv_low, self.robot.th_hsv_high)
+        # cv2.imshow('robot_th', th_img)
+        # dst = cv2.dilate(th_img, cv2.getStructuringElement(0, (3,3)))
+        # blue robot
+        '''
         circles = cv2.HoughCircles(th_img, cv.CV_HOUGH_GRADIENT, 1, 100,
-                                       param1=15, param2=7, minRadius=12, maxRadius=15)
+                                     param1=15, param2=7, minRadius=12, maxRadius=15)
+        '''
+        
+        # yellow-robot        
+        circles = cv2.HoughCircles(th_img, cv.CV_HOUGH_GRADIENT, 1, 100,
+                                  param1=15, param2=7, minRadius=5, maxRadius=10)        
         if circles is not None:
             x, y, r = circles[0][0]
             center = (x, y)                
             self.robot.update_position(x, y)
-
             if self.test_flag:                
-                cv2.circle(frame, (x, y), 1, (0, 0, 255), 2)
+                cv2.circle(frame, (x, y), 1, (0, 255, 0), 2)
             return x, y, r
         return None
     
@@ -117,7 +136,6 @@ class Solution:
             Robot Pos_Y:     2 bytes (0-480)
         """
         message = ''
-
         # millisecond
         time = clock() * 1000 - self.start_time * 1000 
         time_h, time_l = self.high_and_low(long(time))
@@ -136,12 +154,6 @@ class Solution:
             robot_x_h, robot_x_l = self.high_and_low(r_x)
             robot_y_h, robot_y_l = self.high_and_low(r_y)
 
-            '''
-            print('mm', time_h, time_l, puck_x_h, puck_x_l,
-                  puck_y_h, puck_y_l, area_h, area_l,
-                  robot_x_h, robot_x_l, robot_y_h, robot_y_l)
-            '''
-
             list = ['mm']
             list.append(chr(time_h))
             list.append(chr(time_l))
@@ -157,11 +169,9 @@ class Solution:
             list.append(chr(robot_y_l))
 
             message = ''.join(list)
-            
         return message
 
 
-    # not used
     """
     def meet_condition(self, my_object, contour):
         area = my_object.cal_area(contour)
@@ -178,6 +188,7 @@ class Solution:
                (my_object.deltaX > self.move_th or \
                 my_object.deltaY > self.move_th)
     """
+
 
     def high_and_low(self, x):
         return (x >> 8) & 255, x & 255

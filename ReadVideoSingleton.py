@@ -29,7 +29,7 @@ class ReadVideoSingleton:
         self.cap = cv2.VideoCapture(index)
         self.cap.set(3, 320) # set width 320px
         self.cap.set(4, 240) # set height 240px
-        self.cap.set(5, 120)  # set fps 60
+        # self.cap.set(5, 60)  # set fps 60
 
 
     def __new__(cls, index):
