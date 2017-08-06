@@ -110,17 +110,39 @@ class Solution:
         circles = cv2.HoughCircles(th_img, cv.CV_HOUGH_GRADIENT, 1, 100,
                                      param1=15, param2=7, minRadius=12, maxRadius=15)
         '''
+
+        # blue-paper-robot
+        circles = cv2.HoughCircles(th_img, cv.CV_HOUGH_GRADIENT, 1, 100,
+                                   param1=15, param2=7, minRadius=16, maxRadius=19)
+
+        '''
+        contours, hierarchy = cv2.findContours(
+                th_img, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
         
-        # yellow-robot        
+        if contours :
+            (x, y, w, h) = cv2.boundingRect(contours[0])
+            center_x = x + w / 2
+            center_y = y + h / 2
+            self.puck.update_position(center_x, center_y)
+            if self.test_flag:                
+                cv2.circle(frame, (center_x, center_y), 1, (0, 255, 0), 2)
+            return x, y, w, h
+        '''
+        # yellow-robot
+        '''
         circles = cv2.HoughCircles(th_img, cv.CV_HOUGH_GRADIENT, 1, 100,
                                   param1=15, param2=7, minRadius=5, maxRadius=10)        
+        '''
+        
         if circles is not None:
             x, y, r = circles[0][0]
+            # print('r = %d ' % r)
             center = (x, y)                
             self.robot.update_position(x, y)
             if self.test_flag:                
                 cv2.circle(frame, (x, y), 1, (0, 255, 0), 2)
             return x, y, r
+        
         return None
     
 
