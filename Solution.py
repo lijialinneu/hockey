@@ -35,6 +35,8 @@ from time import clock, ctime
 class Solution:
 
 
+    file = 'data.txt'
+
     def __init__(self, cap, puck, robot, serial, time, flag=True):        
         self.cap = cap
         self.puck = puck
@@ -65,12 +67,7 @@ class Solution:
                 queue.put(self.create_message())
                     
             if self.test_flag:
-                # cv2.circle(frame, (17, 37), 2, (0, 0, 255), 2)
-                # cv2.circle(frame, (310, 40), 2, (0, 0, 255), 2)
-                # cv2.circle(frame, (10, 207), 2, (0, 0, 255), 2)
-                # cv2.circle(frame, (313, 217), 2, (0, 0, 255), 2)        
                 cv2.circle(frame, (160, 120), 2, (0, 0, 255), 2)
-                
                 cv2.imshow('frame', frame) # show trace windows
             
             if cv2.waitKey(1) & 0xFF == ord('q'):
@@ -169,13 +166,26 @@ class Solution:
         r_y = self.robot.lastY << 1
 
         if p_x in range(0, 640) and p_y in range(0, 480) :
+
+            # save to data.txt
+            # p_x p_y r_x r_y
+            data_list = ['']
+            data_list.append(str(p_x) + ' ')
+            data_list.append(str(p_y) + ' ')
+            data_list.append(str(r_x) + ' ')
+            data_list.append(str(r_y) + ' ')
+            data_list.append(str(time) + ' ')
+            data = ''.join(data_list)
+            self.write_file(data)
             
+
+            # send to arduino
             puck_x_h, puck_x_l = self.high_and_low(p_x)
             puck_y_h, puck_y_l = self.high_and_low(p_y)
             area_h, area_l = self.high_and_low(int(self.puck.area))
             robot_x_h, robot_x_l = self.high_and_low(r_x)
             robot_y_h, robot_y_l = self.high_and_low(r_y)
-
+           
             list = ['mm']
             list.append(chr(time_h))
             list.append(chr(time_l))
@@ -220,3 +230,8 @@ class Solution:
         self.cap.release()
         cv2.destroyAllWindows()
 
+
+    def write_file(self, data):
+        with open(self.file, 'a') as f:
+            f.write(data + '\n')
+        f.close()
