@@ -6,17 +6,14 @@
 Motion detection module
 Author: lijialin 1040591521@qq.com
 Date: July 2017
-
 Algorithm:
     Image thresholding segmentation
     Contour extraction
     Hough circle
-
 Solution:
     Step1. Init camera and serial
     Step2. Init puck object and robot object
     Step3. Start solution
-
 The core program in the Solution.py
 """
 
@@ -37,8 +34,10 @@ if __name__ == "__main__":
     cap = ReadVideoSingleton(0).get_capture()
     start_time = clock() # start to clock
 
-    serial = serial.Serial('/dev/ttyACM0', 115200, timeout = 1)
-    # serial = serial.Serial('/dev/ttyUSB0', 115200, timeout = 1)
+    try:
+        serial = serial.Serial('/dev/ttyACM0', 115200, timeout = 1)
+    except:
+        serial = serial.Serial('/dev/ttyACM1', 115200, timeout = 1)
     # serial = None
 
 
@@ -103,8 +102,10 @@ if __name__ == "__main__":
     queue = Queue()
     image_process = Process(target=solution.solution_core, args=(queue,))
     message_process = Process(target=solution.send_message, args=(queue,))
+    # post_process = Process(target=solution.post_image)
     image_process.start()
     message_process.start()
+    # post_process.start()
     image_process.join()
     message_process.terminate()
         

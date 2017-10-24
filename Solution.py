@@ -30,12 +30,11 @@ import cv
 import time
 from TableObjects import *
 from time import clock, ctime
+from PostToOneNet import *
 
 
 class Solution:
 
-
-    file = 'data.txt'
 
     def __init__(self, cap, puck, robot, serial, time, flag=True):        
         self.cap = cap
@@ -44,13 +43,15 @@ class Solution:
         self.serial = serial
         self.start_time = time
         self.test_flag = flag
+        self.file = 'data.txt'
+        self.directory = 'frame_data/'
+        # self.mypost = PostToOneNet()
 
     
     def send_message(self, queue):
         while True:
             message = queue.get(True)   
             if message:
-                # print('get message = ', message)
                 self.serial.write(message) # send data
                 self.serial.flushInput() # flush input
     
@@ -63,13 +64,22 @@ class Solution:
             pos_r = self.detect_robot(hue_image, frame)
 
             if pos_p and pos_r:
-                #print('put message')
                 queue.put(self.create_message())
                     
             if self.test_flag:
                 cv2.circle(frame, (160, 120), 2, (0, 0, 255), 2)
+
                 cv2.imshow('frame', frame) # show trace windows
-            
+                # frame = cv2.resize(frame, (96, 72))
+                cv2.imwrite('1.jpg', frame)
+                # self.mypost.post_function('1.jpg')
+                
+                # save frame to directory
+                '''
+                time = clock() * 1000 - self.start_time * 1000 
+                cv2.imwrite(self.directory + str(time) + '.jpg', frame)
+                '''
+                
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
         self.release_window()
@@ -82,11 +92,6 @@ class Solution:
         circles = cv2.HoughCircles(th_img, cv.CV_HOUGH_GRADIENT, 1, 100,
                                        param1=15, param2=7, minRadius=6, maxRadius=8)
 
-        # green-puck
-        '''
-        circles = cv2.HoughCircles(th_img, cv.CV_HOUGH_GRADIENT, 1, 100,
-                                       param1=15, param2=7, minRadius=5, maxRadius=15)
-        '''
         if circles is not None:
             x, y, r = circles[0][0]
             center = (x, y)
@@ -100,8 +105,7 @@ class Solution:
 
     def detect_robot(self, hue_image, frame):
         th_img = cv2.inRange(hue_image, self.robot.th_hsv_low, self.robot.th_hsv_high)
-        # cv2.imshow('robot_th', th_img)
-        # dst = cv2.dilate(th_img, cv2.getStructuringElement(0, (3,3)))
+
         # blue robot
         '''
         circles = cv2.HoughCircles(th_img, cv.CV_HOUGH_GRADIENT, 1, 100,
@@ -111,25 +115,6 @@ class Solution:
         # blue-paper-robot
         circles = cv2.HoughCircles(th_img, cv.CV_HOUGH_GRADIENT, 1, 100,
                                    param1=15, param2=7, minRadius=16, maxRadius=19)
-
-        '''
-        contours, hierarchy = cv2.findContours(
-                th_img, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-        
-        if contours :
-            (x, y, w, h) = cv2.boundingRect(contours[0])
-            center_x = x + w / 2
-            center_y = y + h / 2
-            self.puck.update_position(center_x, center_y)
-            if self.test_flag:                
-                cv2.circle(frame, (center_x, center_y), 1, (0, 255, 0), 2)
-            return x, y, w, h
-        '''
-        # yellow-robot
-        '''
-        circles = cv2.HoughCircles(th_img, cv.CV_HOUGH_GRADIENT, 1, 100,
-                                  param1=15, param2=7, minRadius=5, maxRadius=10)        
-        '''
         
         if circles is not None:
             x, y, r = circles[0][0]
@@ -169,6 +154,7 @@ class Solution:
 
             # save to data.txt
             # p_x p_y r_x r_y
+            '''
             data_list = ['']
             data_list.append(str(p_x) + ' ')
             data_list.append(str(p_y) + ' ')
@@ -177,7 +163,7 @@ class Solution:
             data_list.append(str(time) + ' ')
             data = ''.join(data_list)
             self.write_file(data)
-            
+            '''
 
             # send to arduino
             puck_x_h, puck_x_l = self.high_and_low(p_x)
@@ -204,7 +190,31 @@ class Solution:
         return message
 
 
-    """
+    def high_and_low(self, x):
+        return (x >> 8) & 255, x & 255
+
+
+    def release_window(self):
+        self.cap.release()
+        cv2.destroyAllWindows()
+
+
+    def write_file(self, data):
+        with open(self.file, 'a') as f:
+            f.write(data + '\n')
+        f.close()
+
+    '''
+    def post_image(self):
+        while True:
+            self.mypost.post_function('1.jpg')
+    '''
+
+
+
+
+    #################### useless function start ######################
+    
     def meet_condition(self, my_object, contour):
         area = my_object.cal_area(contour)
         # print('area = ', area)
@@ -219,19 +229,8 @@ class Solution:
         return move and \
                (my_object.deltaX > self.move_th or \
                 my_object.deltaY > self.move_th)
-    """
+
+    #################### useless function end ########################
 
 
-    def high_and_low(self, x):
-        return (x >> 8) & 255, x & 255
 
-
-    def release_window(self):
-        self.cap.release()
-        cv2.destroyAllWindows()
-
-
-    def write_file(self, data):
-        with open(self.file, 'a') as f:
-            f.write(data + '\n')
-        f.close()
